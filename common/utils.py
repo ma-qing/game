@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import json
+
 import pymongo
+from django.http import JsonResponse
 from pymysql import connect
 
 from lib.config import DBNAME, HOST, USER, PASSWORD, MONGOHOST
@@ -63,8 +66,8 @@ collection_data = db['JsonData']
 
 # 递归查询Mongo数据，返回节点信息
 def recursiveMongodata(collection, startfather, record_list):
-    searchele = collection.find({"recordid": startfather})
-    count = collection.count_documents({"recordid": startfather})
+    searchele = collection.find({"createId": startfather})
+    count = collection.count_documents({"createId": startfather})
     print("查询条数:", count)
     record_list.append(startfather)
     # 如果查询条数是一条，则继续迭代到分支出现
@@ -74,7 +77,7 @@ def recursiveMongodata(collection, startfather, record_list):
             if childrenid and childrenid != "null":
                 # 再次调用结果可能是其它几种判断类型, 也可能是自己
                 print("进行了递归调用")
-                lists, record_list = recursiveMongodata(childrenid, record_list)
+                lists, record_list = recursiveMongodata(collection, childrenid, record_list)
 
                 # 记录 递归调用路径
 
@@ -82,7 +85,10 @@ def recursiveMongodata(collection, startfather, record_list):
             else:
                 print("查到了最后一级")
                 lists = []
-                lists.append(member)
+                dicts = {}
+                dicts["childrenid"] = member.get("childrenid")
+                dicts["childrenname"] = member.get("childrenname")
+                lists.append(dicts)
                 return lists, record_list
     # 如果一条都没查到说明到了节点末尾
     elif count == 0:
@@ -93,5 +99,18 @@ def recursiveMongodata(collection, startfather, record_list):
     else:
         lists = []
         for member in searchele:
-            lists.append(member)
+            dicts = {}
+            dicts["childrenid"] = member.get("childrenid")
+            dicts["childrenname"] = member.get("childrenname")
+            lists.append(dicts)
         return lists, record_list
+
+
+# 返回 数据
+def return_render_json(code=1000, msg="", *args, **kwargs):
+    return_data = {
+        "code": code,
+        "msg": msg,
+        "data": kwargs,
+    }
+    return JsonResponse(return_data)

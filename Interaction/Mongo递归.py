@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
 import pymongo
 '''
 任务： 将Json深层格式转为Monogodb数据， 规定每次上传数据和返回数据类型，以便下次查找数据
@@ -7,65 +6,19 @@ import pymongo
 data = [
     {
         "id": 1,
-        "label": "一级 1",
+        "label": "第一章 捡了个姑娘",
         "children": [
             {
-                "id": 4,
-                "label": "二级 1-1",
-                "children": [
-                    {
-                        "id": 9,
-                        "label": "三级 1-1-1"
-                    },
-                    {
-                        "id": 10,
-                        "label": "三级 1-1-2"
-                    }
-                ]
-            },
-            {
                 "id": 2,
-                "label": "一级 2",
+                "label": "酒吧街",
                 "children": [
-                    {
-                        "id": 5,
-                        "label": "二级 2-1"
-                    },
-                    {
-                        "id": 6,
-                        "label": "二级 2-2"
-                    },
                     {
                         "id": 3,
-                        "label": "一级 3",
-                        "children": [
-                            {
-                                "id": 7,
-                                "label": "二级 3-1"
-                            },
-                            {
-                                "id": 8,
-                                "label": "二级 3-2",
-                                "children": [
-                                    {
-                                        "id": 11,
-                                        "label": "三级 3-2-1"
-                                    },
-                                    {
-                                        "id": 12,
-                                        "label": "三级 3-2-2"
-                                    },
-                                    {
-                                        "id": 13,
-                                        "label": "三级 3-2-3"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
+                        "label": "出租车内"
+                    },
                 ]
-            }
-        ]
+            },
+            ]
     }
 ]
 
@@ -83,18 +36,18 @@ def insert2mongo(dicts):
         for i in children:
             childrenname = i.get('label')
             insert_dict = {
-                "recordid": id,
+                "createId": id,
                 "name": label,
-                "children": childrenname,
+                "childrenname": childrenname,
                 "childrenid": i.get("id")
             }
             collection.insert_one(insert_dict)
             insert2mongo(i)
     else:
         insert_dict = {
-            "recordid": id,
+            "createId": id,
             "name": label,
-            "children": "null",
+            "childrenname": "null",
             "childrenid": "null",
         }
         collection.insert_one(insert_dict)
@@ -120,8 +73,8 @@ def recursiveJson(dicts):
 
 # 递归查询Mongo数据，返回节点信息
 def recursiveMongodata(startfather, record_list):
-    searchele = collection.find({"recordid": startfather})
-    count = collection.count_documents({"recordid": startfather})
+    searchele = collection.find({"createId": startfather})
+    count = collection.count_documents({"createId": startfather})
     print("查询条数:", count)
     record_list.append(startfather)
     # 如果查询条数是一条，则继续迭代到分支出现
@@ -152,44 +105,230 @@ def recursiveMongodata(startfather, record_list):
             lists.append(member)
         return lists, record_list
 
-
-data_insert = {
-        "commandId": 2,
+# 章首页
+data_insert1 = {
+    "createId": 1,
+    "chapter": 1,
+    "commandType": "章首页",
+    "背景图": "",
+    "背景音乐": "",
+    "背景音乐开始时间": 0,
+    "背景音乐循环": False,
+    "音效": "",
+    "音效开始时间": 0,
+    "音效结束时间": 0,
+    "旁白": "",
+    "旁白开始时间": 0,
+    "头像": "",
+    "头像位置": "",
+    "动画效果": {
+        "渐入": False,
+        "渐出": False,
+        "下雪": False,
+        "下雨": False
+    }
+}
+# 酒吧街背景页
+data_insert2 = {
+    "createId": 2,
+    "chapter": 1,
+    "commandType": "旁白",
+    "背景图": "/酒吧街.jpg",
+    "背景音乐": "/酒吧街背景音乐.mp3",
+    "背景音乐开始时间": 0,
+    "背景音乐循环": True,
+    "音效": "",
+    "音效开始时间": 0,
+    "音效结束时间": 0,
+    "旁白": "深秋, 晚上11点11分，酒吧街",
+    "旁白开始时间": 0,
+    "头像": "",
+    "头像位置": "",
+    "动画效果": {
+        "场景渐入": False,
+        "场景渐出": True,
+        "下雪": False,
+        "下雨": False
+    },
+    "场景持续时间": 2,
+}
+# 出租车内张连
+data_insert3 = {
+        "createId": 3,
         "chapter": 1,
         "commandType": "对话",
-        "targetid": 2,
-        "背景图": "/cba.png",
-        "背景音乐": "/abc.mp3",
-        "背景音乐开始时间": 1,
-        "音效": None,
-        "音效开始时间": 0.3,
-        "旁白": None,
-        "旁白开始时间": 0.8,
-        "头像": "null & path",
-        "头像位置": "左&中&右",
+        "背景图": "/出租车内.jpg",
+        "背景音乐": {
+            "storage": "",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "停止接单.mp3",
+            "音效开始时间": 1.2,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+        "头像": {
+            "storage": "张连.png",
+            "position": (0, 170),
+        },
         "动画效果": {
-            "渐亮 - 淡入": True,
-            "渐黑 - 淡出": False,
+            "背景音乐渐入": False,
+            "背景音乐渐出": True,
             "下雪": True,
             "下雨": False,
-            "睁眼": True,
-            "微放大": False,
-            "抖动": True
+        },
+        "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "张连",
+                "speak": "呼~终于结束了，该回去了！结束接单！",
+            }
+        },
+        "场景持续时间": 0.0,
+    }
+# 出租车内张连
+data_insert4 = {
+        "createId": 4,
+        "chapter": 1,
+        "commandType": "对话",
+        "背景图": "/出租车内.jpg",
+        "背景音乐": {
+            "storage": "",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "拉开车门声",
+            "音效开始时间": 1,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
         },
 
-    "对话": [
-        {
-            'name': "张连",
-            "speak": "巴啦啦能量！"
+        "头像": {
+            "storage": "张连.png",
+            "position": (0, 170),
         },
-        {
-            "name": "陌生女人",
-            "speak": "古娜拉黑暗之神",
+        "动画效果": {
+            "背景音乐渐入": False,
+            "背景音乐渐出": True,
+            "下雪": False,
+            "下雨": False,
         },
-
-    ]
-
+        "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "张连",
+                "speak": "！！是谁？？！！",
+            }
+        },
+        "场景持续时间": 2,
     }
 
+# 陌生女人
+data_insert5 = {
+        "createId": 5,
+        "chapter": 1,
+        "commandType": "对话",
+        "背景图": "/酒吧背景.jpg",
+        "背景音乐": {
+            "storage": "",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "车门关闭声.mp3",
+            "音效开始时间": 0.0,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+        "头像": {
+            "storage": "陌生女人.png",
+            "position": (0, 170),
+        },
+        "动画效果": {
+            "背景音乐渐入": False,
+            "背景音乐渐出": False,
+            "下雪": False,
+            "下雨": False,
+        },
+        "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "陌生女人",
+                "speak": "师…师傅，走哇！",
+            }
+        },
+        "场景持续时间": 2,
+    }
+# 出租车内张连
+data_insert6 = {
+        "createId": 6,
+        "chapter": 1,
+        "commandType": "对话",
+        "背景图": "/出租车内.jpg",
+        "背景音乐": {
+            "storage": "",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "",
+            "音效开始时间": 0.0,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+        "头像": {
+            "storage": "张连.png",
+            "position": (0, 170),
+        },
+        "动画效果": {
+            "背景音乐渐入": False,
+            "背景音乐渐出": False,
+            "下雪": False,
+            "下雨": False,
+        },
+        "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "张连",
+                "speak": "收工了，您换车吧！",
+            }
+        },
+        "场景持续时间": 2,
+    }
 if __name__ == '__main__':
-    print(recursiveMongodata(3, []))
+    # insert2mongo(data[0])
+    collection_data = db["JsonData"]
+    collection_data.insert_one(data_insert1)
+    collection_data.insert_one(data_insert2)
+    collection_data.insert_one(data_insert3)
+    collection_data.insert_one(data_insert4)
+    collection_data.insert_one(data_insert5)
+    collection_data.insert_one(data_insert6)
+
+
