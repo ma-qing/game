@@ -1,4 +1,4 @@
-Django==2.0
+Django==2.2.13
 pymongo==3.10.1
 PyMySQL==0.9.3
 pytz==2020.1
