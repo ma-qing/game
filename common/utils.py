@@ -106,11 +106,21 @@ def recursiveMongodata(collection, startfather, record_list):
         return lists, record_list
 
 
+# 从Monogo中存储第二种查询方式
+# mongo 存储的数据格式:  startid, chain, crossnode
+def searchMongoIndex(collection, searchid=None):
+    if searchid:
+        search_dict = collection.find_one({"startid": searchid})
+    else:
+        search_dict = collection.find_one({"startid": 1})
+    return search_dict
+
+
 # 返回 数据
-def return_render_json(code=1000, msg="", *args, **kwargs):
+def return_render_json(code=1000, msg="", data=[], *args, **kwargs):
     return_data = {
         "code": code,
         "msg": msg,
-        "data": kwargs,
+        "data": data,
     }
     return JsonResponse(return_data)

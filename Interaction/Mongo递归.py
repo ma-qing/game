@@ -14,7 +14,89 @@ data = [
                 "children": [
                     {
                         "id": 3,
-                        "label": "出租车内"
+                        "label": "张连",
+                        "children": [
+                            {
+                                "id": 4,
+                                "label": "张连",
+                                "children": [
+                                        {
+                                            "id": 5,
+                                            "label": "陌生女人",
+                                            "children": [
+                                                {
+                                                    "id": 6,
+                                                    "label": "张连",
+                                                    "children": [
+                                                        {
+                                                            "id": 7,
+                                                            "label": "轻微鼾声",
+                                                            "children": [
+                                                                {
+                                                                    "id": 8,
+                                                                    "label": "张连",
+                                                                    "children": [
+                                                                        {
+                                                                            "id": 9,
+                                                                            "label": "张连",
+                                                                            "children": [
+                                                                                {
+                                                                                    "id": 10,
+                                                                                    "label": "节点选择",
+                                                                                    "children": [
+                                                                                        {
+                                                                                            "id": 11,
+                                                                                            "label": "陌生女人",
+                                                                                            "children": [
+                                                                                                {
+                                                                                                    "id": 12,
+                                                                                                    "label": "张连",
+                                                                                                    "children": [
+                                                                                                        {
+                                                                                                            "id": 13,
+                                                                                                            "label": "陌生女人",
+                                                                                                            "children": [
+                                                                                                                {
+                                                                                                                    "id": 14,
+                                                                                                                    "label": "旁白",
+                                                                                                                    "children": [
+                                                                                                                        {
+                                                                                                                            "id": 15,
+                                                                                                                            "label": "张连",
+                                                                                                                            "children": [
+
+                                                                                                                            ]
+                                                                                                                        },
+                                                                                                                    ]
+                                                                                                                },
+                                                                                                            ]
+                                                                                                        },
+                                                                                                    ]
+                                                                                                },
+                                                                                            ]
+                                                                                        },
+                                                                                        {
+                                                                                            "id": 16,
+                                                                                            "label": "陌生女人",
+                                                                                            "children": [
+
+                                                                                            ]
+                                                                                        },
+                                                                                    ]
+                                                                                },
+                                                                            ]
+                                                                        },
+                                                                    ]
+                                                                },
+                                                            ]
+                                                        },
+                                                    ]
+                                                },
+                                            ]
+                                        },
+                                ]
+                            },
+                        ]
                     },
                 ]
             },
@@ -28,29 +110,48 @@ collection = db['JsonInfo']
 
 
 # Json 数据导入Mongo collection 中
-def insert2mongo(dicts):
+# def insert2mongo(dicts):
+#     id = dicts.get('id')
+#     label = dicts.get('label')
+#     children = dicts.get("children")
+#     if children != None:
+#         for i in children:
+#             childrenname = i.get('label')
+#             insert_dict = {
+#                 "createId": id,
+#                 "name": label,
+#                 "childrenname": childrenname,
+#                 "childrenid": i.get("id")
+#             }
+#             collection.insert_one(insert_dict)
+#             insert2mongo(i)
+#     else:
+#         insert_dict = {
+#             "createId": id,
+#             "name": label,
+#             "childrenname": "null",
+#             "childrenid": "null",
+#         }
+#         collection.insert_one(insert_dict)
+
+def insert2mongo(dicts, record_list):
     id = dicts.get('id')
-    label = dicts.get('label')
     children = dicts.get("children")
-    if children != None:
-        for i in children:
-            childrenname = i.get('label')
-            insert_dict = {
-                "createId": id,
-                "name": label,
-                "childrenname": childrenname,
-                "childrenid": i.get("id")
-            }
-            collection.insert_one(insert_dict)
-            insert2mongo(i)
+    # 节点最后没有children
+    record_list.append(id)
+    # 当没有节点数据时候将其存入Monogo中
+    if children == None or len(children) == 0:
+        collection.insert_one({"startid": record_list[0], "chain": record_list})
+    elif len(children) == 1:
+        childrendicts = children[0]
+        insert2mongo(childrendicts, record_list)
     else:
-        insert_dict = {
-            "createId": id,
-            "name": label,
-            "childrenname": "null",
-            "childrenid": "null",
-        }
-        collection.insert_one(insert_dict)
+        # 如果遍历到交叉节点,那么把这个数据存入数据库
+        collection.insert_one({"startid": record_list[0], "chain": record_list})
+        record_list = []
+        for dicts in children:
+            # 这里相当于是多个进程处理每个分支下的数据
+            insert2mongo(dicts, [])
 
 
 # 递归查询Json数据
@@ -63,7 +164,7 @@ def recursiveJson(dicts):
         get_chilren = []
     elif len(children) == 1:
         # 只有一个节点记录每层后继续调用first1search
-        collection.insert()
+        # collection.insert()
         get_chilren = recursiveJson(children[0])
     else:
         # 节点分支，返回分支数据
@@ -111,46 +212,124 @@ data_insert1 = {
     "chapter": 1,
     "commandType": "章首页",
     "背景图": "",
-    "背景音乐": "",
-    "背景音乐开始时间": 0,
-    "背景音乐循环": False,
-    "音效": "",
-    "音效开始时间": 0,
-    "音效结束时间": 0,
-    "旁白": "",
-    "旁白开始时间": 0,
-    "头像": "",
-    "头像位置": "",
-    "动画效果": {
-        "渐入": False,
-        "渐出": False,
+    "背景音乐": {
+            "storage": "",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+    "音效": [{
+            "storage": "",
+            "音效开始时间": 0.0,
+            "音效结束时间": 0.0,
+        }],
+    "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+    "头像": {
+            "storage": "",
+            "position": (),
+        },
+    "过场效果": {
+        "背景音乐渐入": False,
+        "背景音乐渐出": False,
         "下雪": False,
-        "下雨": False
-    }
+        "下雨": False,
+        "屏幕渐黑": False,
+        "屏幕渐亮": False,
+        "睁眼效果": False,
+    },
+    "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+        "对话开始时间": 0.0,
+        "对话显示时间": 0,
+        "对话内容": {
+            "name": "",
+            "speak": "",
+        }
+    },
+    "节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+
+        ],
+    "场景持续时间": 2.0,
+        "自动播放": True,
+
 }
+
 # 酒吧街背景页
 data_insert2 = {
     "createId": 2,
     "chapter": 1,
     "commandType": "旁白",
     "背景图": "/酒吧街.jpg",
-    "背景音乐": "/酒吧街背景音乐.mp3",
-    "背景音乐开始时间": 0,
-    "背景音乐循环": True,
-    "音效": "",
-    "音效开始时间": 0,
-    "音效结束时间": 0,
-    "旁白": "深秋, 晚上11点11分，酒吧街",
-    "旁白开始时间": 0,
-    "头像": "",
-    "头像位置": "",
-    "动画效果": {
-        "场景渐入": False,
-        "场景渐出": True,
+    "背景音乐": {
+            "storage": "/酒吧街背景音乐.mp3",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": True,
+        },
+    "音效": [{
+            "storage": "",
+            "音效开始时间": 0.0,
+        },],
+    "旁白": {
+            "旁白内容": "深秋, 晚上11点11分，酒吧街",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+    "头像": {
+            "storage": "",
+            "position": (),
+        },
+    "过场效果": {
+        "背景音乐渐入": False,
+        "背景音乐渐出": False,
         "下雪": False,
-        "下雨": False
+        "下雨": False,
+        "屏幕渐黑": False,
+        "屏幕渐亮": False,
+        "睁眼效果": False,
     },
-    "场景持续时间": 2,
+    "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+        "对话开始时间": 0.0,
+        "对话显示时间": 0,
+        "对话内容": {
+            "name": "",
+            "speak": "",
+        }
+    },
+    "节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+
+        ],
+    "场景持续时间": 2.0,
+        "自动播放": True,
 }
 # 出租车内张连
 data_insert3 = {
@@ -159,15 +338,16 @@ data_insert3 = {
         "commandType": "对话",
         "背景图": "/出租车内.jpg",
         "背景音乐": {
-            "storage": "",
+            "storage": "/酒吧街背景音乐.mp3",
             "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
+            "背景音乐结束时间": 1.2,
             "背景音乐循环": False,
         },
-        "音效": {
+        "音效": [{
             "storage": "停止接单.mp3",
             "音效开始时间": 1.2,
         },
+        ],
         "旁白": {
             "旁白内容": "",
             "旁白开始时间": 0.0,
@@ -178,13 +358,21 @@ data_insert3 = {
             "storage": "张连.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": True,
             "下雪": True,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮": False,
+            "睁眼效果": False,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
@@ -192,7 +380,18 @@ data_insert3 = {
                 "speak": "呼~终于结束了，该回去了！结束接单！",
             }
         },
-        "场景持续时间": 0.0,
+        "节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 # 出租车内张连
 data_insert4 = {
@@ -206,10 +405,16 @@ data_insert4 = {
             "背景音乐结束时间": 0.0,
             "背景音乐循环": False,
         },
-        "音效": {
-            "storage": "拉开车门声",
-            "音效开始时间": 1,
+        "音效": [
+        {
+            "storage": "/拍门声.mp3",
+            "音效开始时间": 0.0,
         },
+            {
+            "storage": "拉开车门声",
+            "音效开始时间": 1.0,
+        },
+        ],
         "旁白": {
             "旁白内容": "",
             "旁白开始时间": 0.0,
@@ -220,21 +425,40 @@ data_insert4 = {
             "storage": "张连.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": True,
             "下雪": False,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮": False,
+            "睁眼效果": False,
         },
-        "对话": {
-            "对话开始时间": 0.0,
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+            "对话开始时间": 0.5,
             "对话显示时间": 0,
             "对话内容": {
                 "name": "张连",
                 "speak": "！！是谁？？！！",
             }
         },
-        "场景持续时间": 2,
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 
 # 陌生女人
@@ -249,10 +473,10 @@ data_insert5 = {
             "背景音乐结束时间": 0.0,
             "背景音乐循环": False,
         },
-        "音效": {
+        "音效": [{
             "storage": "车门关闭声.mp3",
             "音效开始时间": 0.0,
-        },
+        },],
         "旁白": {
             "旁白内容": "",
             "旁白开始时间": 0.0,
@@ -263,13 +487,21 @@ data_insert5 = {
             "storage": "陌生女人.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": False,
             "下雪": False,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
@@ -277,7 +509,17 @@ data_insert5 = {
                 "speak": "师…师傅，走哇！",
             }
         },
-        "场景持续时间": 2,
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            }
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 # 出租车内张连
 data_insert6 = {
@@ -291,10 +533,10 @@ data_insert6 = {
             "背景音乐结束时间": 0.0,
             "背景音乐循环": False,
         },
-        "音效": {
+        "音效": [{
             "storage": "",
             "音效开始时间": 0.0,
-        },
+        },],
         "旁白": {
             "旁白内容": "",
             "旁白开始时间": 0.0,
@@ -305,13 +547,21 @@ data_insert6 = {
             "storage": "张连.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": False,
             "下雪": False,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
@@ -319,7 +569,17 @@ data_insert6 = {
                 "speak": "收工了，您换车吧！",
             }
         },
-        "场景持续时间": 2,
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            }
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 
 
@@ -335,10 +595,10 @@ data_insert7 = {
             "背景音乐结束时间": 0.0,
             "背景音乐循环": False,
         },
-        "音效": {
-            "storage": "轻微鼾声.mp3",
+        "音效": [{
+            "storage": "",
             "音效开始时间": 0.0,
-        },
+        },],
         "旁白": {
             "旁白内容": "",
             "旁白开始时间": 0.0,
@@ -349,19 +609,39 @@ data_insert7 = {
             "storage": "陌生女人.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": False,
             "下雪": False,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
+                "name": "陌生女人",
+                "speak": "轻微的鼾声"
             }
         },
-        "场景持续时间": 2,
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            }
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 
 # 出租车内张连
@@ -390,13 +670,21 @@ data_insert8 = {
             "storage": "张连.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": False,
             "下雪": False,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
@@ -404,7 +692,17 @@ data_insert8 = {
                 "speak": "睡、睡着了？！喂，喂，醒醒！",
             }
         },
-        "场景持续时间": 2,
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            }
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 
 # 出租车内张连
@@ -433,13 +731,21 @@ data_insert9 = {
             "storage": "张连.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": False,
             "下雪": False,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
@@ -447,54 +753,22 @@ data_insert9 = {
                 "speak": "睡得真够死的！这人真是……至少说一声去哪儿呀！怎么办好呢？",
             }
         },
-        "场景持续时间": 2,
-    }
-# 出租车内张连
-data_insert11 = {
-        "createId": 9,
-        "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
-            "storage": "车内音乐.mp3",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
-        },
-        "音效": {
-            "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
-        },
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
-        },
-        "动画效果": {
-            "场景渐入": False,
-            "场景渐出": False,
-            "下雪": False,
-            "下雨": False,
-        },
-        "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
-                "name": "张连",
-                "speak": "唉，我还是等她醒过来吧！这得等到什么时候去啊…唉…",
-            }
-        },
-        "场景持续时间": 2,
+            },
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 
 # 出租车内选择
 data_insert10 = {
-        "createId": 9,
+        "createId": 10,
         "chapter": 1,
         "commandType": "选择",
         "背景图": "/出租车内.jpg",
@@ -518,13 +792,21 @@ data_insert10 = {
             "storage": "",
             "position": "",
         },
-        "动画效果": {
+        "过场效果": {
             "背景音乐渐入": False,
             "背景音乐渐出": False,
             "下雪": False,
             "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
@@ -535,15 +817,78 @@ data_insert10 = {
                 "createid": 11,
                 # 文字大小颜色配置， 背景色配置
                 'content': "唉，我还是等她醒来再说吧！",
-                "position": (1, 2),
+                "position": (250, 150),
 
             },
-{
-                "createid": 12,
-                'content': "算了，我先往家开吧！"
+            {
+                "createid": 16,
+                'content': "算了，我先往家开吧！",
+                "position": (250, 450),
             },
         ],
-        "场景持续时间": 2,
+        "场景持续时间": 2.0,
+        "自动播放": False,
+}
+
+# 出租车内张连
+data_insert11 = {
+        "createId": 11,
+        "chapter": 1,
+        "commandType": "对话",
+        "背景图": "/出租车内.jpg",
+        "背景音乐": {
+            "storage": "车内音乐.mp3",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "",
+            "音效开始时间": 0.0,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+        "头像": {
+            "storage": "张连.png",
+            "position": (0, 170),
+        },
+        "过场效果": {
+            "场景渐入": False,
+            "场景渐出": False,
+            "下雪": False,
+            "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
+        },
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "张连",
+                "speak": "唉，我还是等她醒过来吧！这得等到什么时候去啊…唉…",
+            }
+        },
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 
 
@@ -573,14 +918,21 @@ data_insert12 = {
             "storage": "陌生女人.png",
             "position": (0, 170),
         },
-        "动画效果": {
+        "过场效果": {
             "场景渐入": False,
             "场景渐出": False,
             "下雪": False,
             "下雨": False,
-            "睁眼效果": True,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":True,
         },
-        "对话": {
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
             "对话开始时间": 0.0,
             "对话显示时间": 0,
             "对话内容": {
@@ -588,43 +940,286 @@ data_insert12 = {
                 "speak": "这…我在哪儿？",
             }
         },
-        "场景持续时间": 2,
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            }
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
     }
 
 
 # 酒吧街背景页
+# 酒吧街背景页
 data_insert13 = {
-    "createId": 2,
+    "createId": 13,
     "chapter": 1,
     "commandType": "旁白",
     "背景图": "/酒吧街.jpg",
-    "背景音乐": "/酒吧街背景音乐.mp3",
-    "背景音乐开始时间": 0,
-    "背景音乐循环": True,
-    "音效": "",
-    "音效开始时间": 0,
-    "音效结束时间": 0,
-    "旁白": "车窗外，深夜的酒吧街还是灯红酒绿。但是下起了雨。",
-    "旁白开始时间": 0,
-    "头像": "",
-    "头像位置": "",
-    "动画效果": {
-        "场景渐入": False,
-        "场景渐出": True,
+    "背景音乐": {
+            "storage": "/酒吧街背景音乐.mp3",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": True,
+        },
+    "音效": [{
+            "storage": "",
+            "音效开始时间": 0.0,
+        },],
+    "旁白": {
+            "旁白内容": "车窗外，深夜的酒吧街还是灯红酒绿。但是下起了雨。",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+    "头像": {
+            "storage": "",
+            "position": (),
+        },
+    "过场效果": {
+        "背景音乐渐入": False,
+        "背景音乐渐出": False,
         "下雪": False,
-        "下雨": True
+        "下雨": False,
+        "屏幕渐黑": False,
+        "屏幕渐亮": False,
+        "睁眼效果": False,
     },
-    "场景持续时间": 2,
+    
+    "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+        "对话开始时间": 0.0,
+        "对话显示时间": 0,
+        "对话内容": {
+            "name": "",
+            "speak": "",
+        }
+    },
+    "节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+
+        ],
+    "场景持续时间": 2.0,
+        "自动播放": True,
 }
 
+# 出租车内张连
+data_insert14 = {
+        "createId": 14,
+        "chapter": 1,
+        "commandType": "对话",
+        "背景图": "/出租车内.jpg",
+        "背景音乐": {
+            "storage": "车内音乐.mp3",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "",
+            "音效开始时间": 0.0,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+        "头像": {
+            "storage": "张连.png",
+            "position": (0, 170),
+        },
+        "过场效果": {
+            "场景渐入": False,
+            "场景渐出": False,
+            "下雪": False,
+            "下雨": False,
+            "屏幕渐黑": False,
+            "屏幕渐亮":False,
+            "睁眼效果":False,
+        },
+        
+
+"特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "张连",
+                "speak": "唉，你总算是醒了！",
+            }
+        },
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
+    }
+
+# 陌生女人
+data_insert15 = {
+        "createId": 15,
+        "chapter": 1,
+        "commandType": "对话",
+        "背景图": "/出租车内.jpg",
+        "背景音乐": {
+            "storage": "",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "",
+            "音效开始时间": 0.0,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+        "头像": {
+            "storage": "陌生女人.png",
+            "position": (0, 170),
+        },
+        "过场效果": {
+            "场景渐入": False,
+            "场景渐出": False,
+            "下雪": False,
+            "下雨": False,
+            "睁眼效果": True,
+        },
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "陌生女人",
+                "speak": "那个，请问你是…?",
+            }
+        },
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
+    }
+
+# 出租车内张连
+data_insert16 = {
+        "createId": 16,
+        "chapter": 1,
+        "commandType": "对话",
+        "背景图": "/出租车内.jpg",
+        "背景音乐": {
+            "storage": "车内音乐.mp3",
+            "背景音乐开始时间": 0.0,
+            "背景音乐结束时间": 0.0,
+            "背景音乐循环": False,
+        },
+        "音效": {
+            "storage": "",
+            "音效开始时间": 0.0,
+        },
+        "旁白": {
+            "旁白内容": "",
+            "旁白开始时间": 0.0,
+            "旁白持续时间": 0.0,
+        },
+
+        "头像": {
+            "storage": "张连.png",
+            "position": (0, 170),
+        },
+        "过场效果": {
+            "场景渐入": False,
+            "场景渐出": False,
+            "下雪": False,
+            "下雨": False,
+            "睁眼效果": False,
+            "屏幕渐黑": True,
+
+        },
+        "特殊效果":{
+            "下雪": False,
+            "下雨": False,
+            "画面放大": False,
+        },
+    "对话": {
+            "对话开始时间": 0.0,
+            "对话显示时间": 0,
+            "对话内容": {
+                "name": "张连",
+                "speak": "算了，我还是先往家开吧！",
+            }
+        },
+"节点选择": [
+            {
+                "createid": 0,
+                # 文字大小颜色配置， 背景色配置
+                'content': "",
+                "position": (),
+
+            },
+        ],
+        "场景持续时间": 2.0,
+        "自动播放": True,
+    }
+
+
 if __name__ == '__main__':
-    # insert2mongo(data[0])
-    collection_data = db["JsonData"]
-    collection_data.insert_one(data_insert1)
-    collection_data.insert_one(data_insert2)
-    collection_data.insert_one(data_insert3)
-    collection_data.insert_one(data_insert4)
-    collection_data.insert_one(data_insert5)
-    collection_data.insert_one(data_insert6)
+    insert2mongo(data[0], [])
+    # collection_data = db["JsonData"]
+    # collection_data.insert_one(data_insert1)
+    # collection_data.insert_one(data_insert2)
+    # collection_data.insert_one(data_insert3)
+    # collection_data.insert_one(data_insert4)
+    # collection_data.insert_one(data_insert5)
+    # collection_data.insert_one(data_insert6)
+    # collection_data.insert_one(data_insert7)
+    # collection_data.insert_one(data_insert8)
+    # collection_data.insert_one(data_insert9)
+    # collection_data.insert_one(data_insert10)
+    # collection_data.insert_one(data_insert11)
+    # collection_data.insert_one(data_insert12)
+    # collection_data.insert_one(data_insert13)
+    # collection_data.insert_one(data_insert14)
+    # collection_data.insert_one(data_insert15)
+    # collection_data.insert_one(data_insert16)
 
 
