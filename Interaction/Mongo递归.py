@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
+import json
+
 import pymongo
 '''
 任务： 将Json深层格式转为Monogodb数据， 规定每次上传数据和返回数据类型，以便下次查找数据
 '''
 data = [
-    {
-        "id": 1,
-        "label": "第一章 捡了个姑娘",
-        "children": [
             {
                 "id": 2,
                 "label": "酒吧街",
@@ -42,7 +40,7 @@ data = [
                                                                             "children": [
                                                                                 {
                                                                                     "id": 10,
-                                                                                    "label": "节点选择",
+                                                                                    "label": "nodeChoice",
                                                                                     "children": [
                                                                                         {
                                                                                             "id": 11,
@@ -58,7 +56,7 @@ data = [
                                                                                                             "children": [
                                                                                                                 {
                                                                                                                     "id": 14,
-                                                                                                                    "label": "旁白",
+                                                                                                                    "label": "narrator",
                                                                                                                     "children": [
                                                                                                                         {
                                                                                                                             "id": 15,
@@ -79,7 +77,13 @@ data = [
                                                                                             "id": 16,
                                                                                             "label": "陌生女人",
                                                                                             "children": [
+{
+                                                                                            "id": 17,
+                                                                                            "label": "视频页",
+                                                                                            "children": [
 
+                                                                                            ]
+                                                                                        },
                                                                                             ]
                                                                                         },
                                                                                     ]
@@ -100,14 +104,17 @@ data = [
                     },
                 ]
             },
-            ]
-    }
 ]
 
 client = pymongo.MongoClient(host="localhost", port=27017)
 db = client['test']
 collection = db['JsonInfo']
+collection_data = db["JsonData"]
 
+Intranet_client = pymongo.MongoClient(host="192.168.1.254", port=27017)
+Intranet_db = Intranet_client['test']
+Intranet_collection = Intranet_db['JsonInfo']
+Intranet_collection_data = Intranet_db["JsonData"]
 
 # Json 数据导入Mongo collection 中
 # def insert2mongo(dicts):
@@ -134,7 +141,7 @@ collection = db['JsonInfo']
 #         }
 #         collection.insert_one(insert_dict)
 
-def insert2mongo(dicts, record_list):
+def insert2mongo(collection, dicts, record_list):
     id = dicts.get('id')
     children = dicts.get("children")
     # 节点最后没有children
@@ -144,14 +151,14 @@ def insert2mongo(dicts, record_list):
         collection.insert_one({"startid": record_list[0], "chain": record_list})
     elif len(children) == 1:
         childrendicts = children[0]
-        insert2mongo(childrendicts, record_list)
+        insert2mongo(collection, childrendicts, record_list)
     else:
         # 如果遍历到交叉节点,那么把这个数据存入数据库
         collection.insert_one({"startid": record_list[0], "chain": record_list})
         record_list = []
         for dicts in children:
             # 这里相当于是多个进程处理每个分支下的数据
-            insert2mongo(dicts, [])
+            insert2mongo(collection, dicts, [])
 
 
 # 递归查询Json数据
@@ -206,380 +213,363 @@ def recursiveMongodata(startfather, record_list):
             lists.append(member)
         return lists, record_list
 
-# 章首页
-data_insert1 = {
-    "createId": 1,
-    "chapter": 1,
-    "commandType": "章首页",
-    "背景图": "",
-    "背景音乐": {
-            "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
-        },
-    "音效": [{
-            "storage": "",
-            "音效开始时间": 0.0,
-            "音效结束时间": 0.0,
-        }],
-    "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
-        },
-
-    "头像": {
-            "storage": "",
-            "position": (),
-        },
-    "过场效果": {
-        "背景音乐渐入": False,
-        "背景音乐渐出": False,
-        "下雪": False,
-        "下雨": False,
-        "屏幕渐黑": False,
-        "屏幕渐亮": False,
-        "睁眼效果": False,
-    },
-    "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
-        },
-    "对话": {
-        "对话开始时间": 0.0,
-        "对话显示时间": 0,
-        "对话内容": {
-            "name": "",
-            "speak": "",
-        }
-    },
-    "节点选择": [
-            {
-                "createid": 0,
-                # 文字大小颜色配置， 背景色配置
-                'content': "",
-                "position": (),
-
-            },
-
-        ],
-    "场景持续时间": 2.0,
-        "自动播放": True,
-
-}
+# # 章首页
+# data_insert1 = {
+#     "createId": 1,
+#     "chapter": 1,
+#     "commandType": 0,
+#     "bgimg": "",
+#     "bgm": {
+#             "storage": "",
+#             "starttime": "",
+#             
+#             "loop": False,
+#         },
+#     "seffect": [{
+#             "storage": "",
+#             "starttime": "",
+#             "seffectEndtime": 0.0,
+#         }],
+#     "narrator": {
+#             "content": "",
+#             "starttime": "",
+#             "duration": 0.0,
+#         },
+#
+#     "avatar": {
+#             "storage": "",
+#             "position": "",
+#         },
+#     "cutscenes": {
+#
+#
+#         "screenDark": False,
+#
+#         "openEyes": False,
+#     },
+#     "special":{
+#             "Snowing": False,
+#             "raining": False,
+#             "zoomIn": False,
+#         },
+#     "dialogue": {
+#         "starttime": "",
+#
+#         "content": {
+#             "name": "",
+#             "speak": "",
+#         }
+#     },
+#     "nodeChoice": [
+#             {
+#                 "createId": 0,
+#                 # 文字大小颜色配置， 背景色配置
+#                 'content': "",
+#                 "position": "",
+#
+#             },
+#
+#         ],
+#     "sceneDuration": "2.0",
+#         "autoplay": True,
+#
+# }
 
 # 酒吧街背景页
 data_insert2 = {
     "createId": 2,
     "chapter": 1,
-    "commandType": "旁白",
-    "背景图": "/酒吧街.jpg",
-    "背景音乐": {
-            "storage": "/酒吧街背景音乐.mp3",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": True,
+    "commandType": 1,
+    "bgimg": "/barStreet.jpg",
+    "bgm": {
+            "storage": "/bgm_barStreet.mp3",
+            "starttime": "",
+            "loop": True,
         },
-    "音效": [{
+    "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
+            "starttime": "",
         },],
-    "旁白": {
-            "旁白内容": "深秋, 晚上11点11分，酒吧街",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+    "narrator": {
+            "content": "深秋, 晚上11点11分，酒吧街",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-    "头像": {
+    "avatar": {
             "storage": "",
-            "position": (),
+            "position": "",
         },
-    "过场效果": {
-        "背景音乐渐入": False,
-        "背景音乐渐出": False,
-        "下雪": False,
-        "下雨": False,
-        "屏幕渐黑": False,
-        "屏幕渐亮": False,
-        "睁眼效果": False,
+    "cutscenes": {
+        
+        
+        "screenDark": False,
+        "openEyes": False,
     },
-    "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+    "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-        "对话开始时间": 0.0,
-        "对话显示时间": 0,
-        "对话内容": {
+    "dialogue": {
+        "starttime": "",
+        "content": {
             "name": "",
-            "speak": "",
+            "speak": "深秋, 晚上11点11分，酒吧街",
         }
     },
-    "节点选择": [
+    "nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
 
         ],
-    "场景持续时间": 2.0,
-        "自动播放": True,
+    "sceneDuration": "2.0",
+        "autoplay": True,
 }
 # 出租车内张连
 data_insert3 = {
         "createId": 3,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
-            "storage": "/酒吧街背景音乐.mp3",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 1.2,
-            "背景音乐循环": False,
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
+            "storage": "/bgm_barStreet.mp3",
+            "starttime": "",
+            "loop": False,
         },
-        "音效": [{
-            "storage": "停止接单.mp3",
-            "音效开始时间": 1.2,
+        "seffect": [{
+            "storage": "/effect_closeOrder.mp3",
+            "starttime": "1.2",
         },
         ],
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": True,
-            "下雪": True,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮": False,
-            "睁眼效果": False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes": False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "张连",
                 "speak": "呼~终于结束了，该回去了！结束接单！",
             }
         },
-        "节点选择": [
+        "nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
 
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 # 出租车内张连
 data_insert4 = {
         "createId": 4,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": [
+        "seffect": [
         {
-            "storage": "/拍门声.mp3",
-            "音效开始时间": 0.0,
+            "storage": "/effect_beatCar.WAV",
+            "starttime": "",
         },
             {
-            "storage": "拉开车门声",
-            "音效开始时间": 1.0,
+            "storage": "/effect_pullCarDoor.WAV",
+            "starttime": "1.0",
         },
         ],
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": True,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮": False,
-            "睁眼效果": False,
+        "cutscenes": {
+            
+            "screenDark": False,
+            
+            "openEyes": False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.5,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "0.5",
+            
+            "content": {
                 "name": "张连",
                 "speak": "！！是谁？？！！",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
 
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 # 陌生女人
 data_insert5 = {
         "createId": 5,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/酒吧背景.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/barStreet.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": [{
-            "storage": "车门关闭声.mp3",
-            "音效开始时间": 0.0,
+        "seffect": [{
+            "storage": "/effect_closeCar.mp3",
+            "starttime": "",
         },],
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "陌生女人.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/girl.png",
+           "position": "左",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "陌生女人",
                 "speak": "师…师傅，走哇！",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             }
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 # 出租车内张连
 data_insert6 = {
         "createId": 6,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": [{
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
+            "starttime": "",
         },],
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "张连",
                 "speak": "收工了，您换车吧！",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             }
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 
@@ -587,308 +577,302 @@ data_insert6 = {
 data_insert7 = {
         "createId": 7,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": [{
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
+            "starttime": "",
         },],
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "陌生女人.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/girl.png",
+           "position": "左",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "陌生女人",
                 "speak": "轻微的鼾声"
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             }
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 # 出租车内张连
 data_insert8 = {
         "createId": 8,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": {
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+            "starttime": "",
+        },],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "张连",
                 "speak": "睡、睡着了？！喂，喂，醒醒！",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             }
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 # 出租车内张连
 data_insert9 = {
         "createId": 9,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": {
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+            "starttime": "",
+        }],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "张连",
                 "speak": "睡得真够死的！这人真是……至少说一声去哪儿呀！怎么办好呢？",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 # 出租车内选择
 data_insert10 = {
         "createId": 10,
         "chapter": 1,
-        "commandType": "选择",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
-            "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
-        },
-        "音效": {
-            "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
-        },
+        "commandType": 3,
+        "bgimg": "/car.jpg",
 
-        "头像": {
+        "bgm": {
+            "storage": "",
+            "starttime": "",
+            
+            "loop": False,
+        },
+        "seffect": [{
+            "storage": "",
+            "starttime": "",
+        }],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
+        },
+        # 头像
+        "avatar": {
             "storage": "",
             "position": "",
         },
-        "过场效果": {
-            "背景音乐渐入": False,
-            "背景音乐渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
+                "name": "",
+                "speak": "",
             }
         },
-        "节点选择": [
+
+        "nodeChoice": [
             {
-                "createid": 11,
+                "createId": 11,
                 # 文字大小颜色配置， 背景色配置
                 'content': "唉，我还是等她醒来再说吧！",
-                "position": (250, 150),
+               "position": "中",
 
             },
             {
-                "createid": 16,
+                "createId": 16,
                 'content': "算了，我先往家开吧！",
-                "position": (250, 450),
+               "position": "中",
             },
         ],
-        "场景持续时间": 2.0,
-        "自动播放": False,
+        "sceneDuration": "2.0",
+        "autoplay": False,
 }
 
 # 出租车内张连
 data_insert11 = {
         "createId": 11,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
-            "storage": "车内音乐.mp3",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
+            "storage": "/bgm_car.mp3",
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": {
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+            "starttime": "",
+        }],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "场景渐入": False,
-            "场景渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "张连",
                 "speak": "唉，我还是等她醒过来吧！这得等到什么时候去啊…唉…",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 
@@ -896,61 +880,59 @@ data_insert11 = {
 data_insert12 = {
         "createId": 12,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": {
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+            "starttime": "",
+        },],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "陌生女人.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/girl.png",
+           "position": "左",
         },
-        "过场效果": {
-            "场景渐入": False,
-            "场景渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":True,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":True,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "陌生女人",
                 "speak": "这…我在哪儿？",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             }
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 
@@ -959,267 +941,299 @@ data_insert12 = {
 data_insert13 = {
     "createId": 13,
     "chapter": 1,
-    "commandType": "旁白",
-    "背景图": "/酒吧街.jpg",
-    "背景音乐": {
-            "storage": "/酒吧街背景音乐.mp3",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": True,
+    "commandType": 1,
+    "bgimg": "/barStreet.jpg",
+    "bgm": {
+            "storage": "/bgm_barStreet.mp3",
+            "starttime": "",
+            
+            "loop": True,
         },
-    "音效": [{
+    "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
+            "starttime": "",
         },],
-    "旁白": {
-            "旁白内容": "车窗外，深夜的酒吧街还是灯红酒绿。但是下起了雨。",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+    "narrator": {
+            "content": "车窗外，深夜的酒吧街还是灯红酒绿。但是下起了雨。",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-    "头像": {
+    "avatar": {
             "storage": "",
-            "position": (),
+            "position": "",
         },
-    "过场效果": {
-        "背景音乐渐入": False,
-        "背景音乐渐出": False,
-        "下雪": False,
-        "下雨": False,
-        "屏幕渐黑": False,
-        "屏幕渐亮": False,
-        "睁眼效果": False,
+    "cutscenes": {
+        
+        
+        "screenDark": False,
+        
+        "openEyes": False,
     },
-    
-    "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+
+    "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-        "对话开始时间": 0.0,
-        "对话显示时间": 0,
-        "对话内容": {
+    "dialogue": {
+        "starttime": "",
+        "content": {
             "name": "",
-            "speak": "",
+            "speak": "车窗外，深夜的酒吧街还是灯红酒绿。但是下起了雨。",
         }
     },
-    "节点选择": [
+    "nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
 
         ],
-    "场景持续时间": 2.0,
-        "自动播放": True,
+    "sceneDuration": "2.0",
+        "autoplay": True,
 }
 
 # 出租车内张连
 data_insert14 = {
         "createId": 14,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
-            "storage": "车内音乐.mp3",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
+            "storage": "/bgm_car.mp3",
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": {
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+            "starttime": "",
+        },],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "场景渐入": False,
-            "场景渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "屏幕渐黑": False,
-            "屏幕渐亮":False,
-            "睁眼效果":False,
+        "cutscenes": {
+            
+            
+            "screenDark": False,
+            
+            "openEyes":False,
         },
-        
 
-"特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+
+"special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            
+            "content": {
                 "name": "张连",
                 "speak": "唉，你总算是醒了！",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 # 陌生女人
 data_insert15 = {
         "createId": 15,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
             "storage": "",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": {
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+            "starttime": "",
+        }],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "陌生女人.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/girl.png",
+           "position": "左",
         },
-        "过场效果": {
-            "场景渐入": False,
-            "场景渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "睁眼效果": True,
+        "cutscenes": {
+            
+            "screenDark": False,
+            "openEyes": True,
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            "content": {
                 "name": "陌生女人",
                 "speak": "那个，请问你是…?",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 # 出租车内张连
 data_insert16 = {
         "createId": 16,
         "chapter": 1,
-        "commandType": "对话",
-        "背景图": "/出租车内.jpg",
-        "背景音乐": {
-            "storage": "车内音乐.mp3",
-            "背景音乐开始时间": 0.0,
-            "背景音乐结束时间": 0.0,
-            "背景音乐循环": False,
+        "commandType": 2,
+        "bgimg": "/car.jpg",
+        "bgm": {
+            "storage": "/bgm_car.mp3",
+            "starttime": "",
+            
+            "loop": False,
         },
-        "音效": {
+        "seffect": [{
             "storage": "",
-            "音效开始时间": 0.0,
-        },
-        "旁白": {
-            "旁白内容": "",
-            "旁白开始时间": 0.0,
-            "旁白持续时间": 0.0,
+            "starttime": "",
+        }],
+        "narrator": {
+            "content": "",
+            "starttime": "",
+            "duration": 0.0,
         },
 
-        "头像": {
-            "storage": "张连.png",
-            "position": (0, 170),
+        "avatar": {
+            "storage": "/zhanglian.png",
+           "position": "左",
         },
-        "过场效果": {
-            "场景渐入": False,
-            "场景渐出": False,
-            "下雪": False,
-            "下雨": False,
-            "睁眼效果": False,
-            "屏幕渐黑": True,
+        "cutscenes": {
+            
+            
+            "openEyes": False,
+            "screenDark": True,
 
         },
-        "特殊效果":{
-            "下雪": False,
-            "下雨": False,
-            "画面放大": False,
+        "special":{
+            "Snowing": False,
+            "raining": False,
+            "zoomIn": False,
         },
-    "对话": {
-            "对话开始时间": 0.0,
-            "对话显示时间": 0,
-            "对话内容": {
+    "dialogue": {
+            "starttime": "",
+            "content": {
                 "name": "张连",
                 "speak": "算了，我还是先往家开吧！",
             }
         },
-"节点选择": [
+"nodeChoice": [
             {
-                "createid": 0,
+                "createId": 0,
                 # 文字大小颜色配置， 背景色配置
                 'content': "",
-                "position": (),
+                "position": "",
 
             },
         ],
-        "场景持续时间": 2.0,
-        "自动播放": True,
+        "sceneDuration": "2.0",
+        "autoplay": True,
     }
 
 
 if __name__ == '__main__':
-    insert2mongo(data[0], [])
-    # collection_data = db["JsonData"]
-    # collection_data.insert_one(data_insert1)
-    # collection_data.insert_one(data_insert2)
-    # collection_data.insert_one(data_insert3)
-    # collection_data.insert_one(data_insert4)
-    # collection_data.insert_one(data_insert5)
-    # collection_data.insert_one(data_insert6)
-    # collection_data.insert_one(data_insert7)
-    # collection_data.insert_one(data_insert8)
-    # collection_data.insert_one(data_insert9)
-    # collection_data.insert_one(data_insert10)
-    # collection_data.insert_one(data_insert11)
-    # collection_data.insert_one(data_insert12)
-    # collection_data.insert_one(data_insert13)
-    # collection_data.insert_one(data_insert14)
-    # collection_data.insert_one(data_insert15)
-    # collection_data.insert_one(data_insert16)
+    def changejson(dicts):
+        dicts["bgmStorage"] = dicts.get("bgm").get("storage")
+        # dicts["bgmStarttime"] = dicts.get("bgm").get("starttime")
+        # dicts["bgmEndtime"] = dicts.get("bgm").get("endtime")
+        dicts["bgmLoop"] = dicts.get("bgm").get("loop")
+        dicts["bgmStorage"] = dicts.get("bgm").get("storage")
+        dicts.pop("bgm")
+        # dicts["narratorContent"] = dicts.get('narrator').get("content")
+        # dicts["narratorStarttime"] = dicts.get('narrator').get("starttime")
+        # dicts["narratorDuration"] = dicts.get('narrator').get("duration")
+        dicts.pop('narrator')
+
+        dicts["avatarStorage"] = dicts.get('avatar').get("storage")
+        dicts["avatarPosition"] = dicts.get('avatar').get("position")
+        dicts.pop("avatar")
+
+        dicts["screenDark"] = dicts.get("cutscenes").get("screenDark")
+        # dicts["bgmGradually"] = dicts.get("cutscenes").get("bgmGradually")
+        # dicts["bgmFades"] = dicts.get("cutscenes").get("bgmFades")
+        # dicts["screenBrighter"] = dicts.get("cutscenes").get("screenBrighter")
+        dicts["openEyes"] = dicts.get("cutscenes").get("openEyes")
+        dicts.pop("cutscenes")
+
+        dicts["snowing"] = dicts.get("special").get("Snowing")
+        dicts["raining"] = dicts.get("special").get("raining")
+        dicts["zoomIn"] = dicts.get("special").get("zoomIn")
+        dicts.pop("special")
+
+        dicts["dialogueStarttime"] = dicts["dialogue"].get("starttime")
+        # dicts["dialogueDuration"] = dicts["dialogue"].get("duration")
+        dicts["dialogueName"] = dicts["dialogue"].get("content").get("name")
+        dicts["dialogueSpeak"] = dicts["dialogue"].get("content").get("speak")
+        dicts.pop("dialogue")
+
+        dicts['vedioStorage'] = ""
+        dicts['vedioSkip'] = True
+
+        # collection_data.insert_one(dicts)
+        Intranet_collection_data.insert_one(dicts)
+
+    changejson(data_insert2)
+    changejson(data_insert3)
+    changejson(data_insert4)
+    changejson(data_insert5)
+    changejson(data_insert6)
+    changejson(data_insert7)
+    changejson(data_insert8)
+    changejson(data_insert9)
+    changejson(data_insert10)
+    changejson(data_insert11)
+    changejson(data_insert12)
+    changejson(data_insert13)
+    changejson(data_insert14)
+    changejson(data_insert15)
+    changejson(data_insert16)
+    # insert2mongo(collection, data[0], [])
+
+
+
+
+
 
 

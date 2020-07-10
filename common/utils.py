@@ -112,7 +112,7 @@ def searchMongoIndex(collection, searchid=None):
     if searchid:
         search_dict = collection.find_one({"startid": searchid})
     else:
-        search_dict = collection.find_one({"startid": 1})
+        search_dict = collection.find_one({"startid": 2})
     return search_dict
 
 
