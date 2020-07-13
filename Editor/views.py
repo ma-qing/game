@@ -7,6 +7,3 @@ def login(request):
     # password使用rsa 非对称加密
     password = request.POST.get("password")
     pass
-
-# 遍历最大次数
-# 记录每次遍历次数和最大利润

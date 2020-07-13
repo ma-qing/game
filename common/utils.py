@@ -2,10 +2,13 @@
 import json
 
 import pymongo
+import redis
 from django.http import JsonResponse
 from pymysql import connect
 
-from lib.config import DBNAME, HOST, USER, PASSWORD, MONGOHOST
+from common.CONSSTANTS import STARTID
+from game import settings
+from lib.config import DBNAME, HOST, USER, PASSWORD, MONGOHOST, Redis_Host
 
 
 class Mysqlpython:
@@ -112,15 +115,33 @@ def searchMongoIndex(collection, searchid=None):
     if searchid:
         search_dict = collection.find_one({"startid": searchid})
     else:
-        search_dict = collection.find_one({"startid": 2})
+        search_dict = collection.find_one({"startid": STARTID})
     return search_dict
 
 
 # 返回 数据
-def return_render_json(code=1000, msg="", data=[], *args, **kwargs):
+def return_render_listjson(code=1000, msg="", data=[], *args, **kwargs):
     return_data = {
         "code": code,
-        "msg": msg,
+        "msg": msg if settings.DEBUG else "",
         "data": data,
     }
     return JsonResponse(return_data)
+
+
+def return_render_dictjson(code=1000, msg="", data={}, *args, **kwargs):
+    return_data = {
+        "code": code,
+        "msg": msg if settings.DEBUG else "",
+        "data": data,
+    }
+    return JsonResponse(return_data)
+
+
+# redis数据库信息
+def set_redis(db=0):
+    host = Redis_Host
+    port = 6379
+    pool = redis.ConnectionPool(host=host, port=port, db=db)
+    r = redis.StrictRedis(connection_pool=pool)
+    return r

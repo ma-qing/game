@@ -112,6 +112,11 @@ def zip_yasuo(start_dir, end_dir):
 
 
 if __name__ == "__main__":
-    Start_dir = "E:\WorkCode\game\static"
-    end_dir = "E:\WorkCode\game\yasuo\yasuo"
-    zip_yasuo(Start_dir, end_dir)
+    import pymongo
+    client = pymongo.MongoClient(host="localhost", port=27017)
+    collection = client['test']['JsonData']
+    groupdata = collection.aggregate([
+        {'$group': {'_id': "$chapter", 'count': {'$sum': 1}}},
+    ])
+    for i in groupdata:
+        print(i)
